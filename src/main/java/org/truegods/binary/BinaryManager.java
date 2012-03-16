@@ -12,13 +12,13 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -44,6 +44,7 @@ public class BinaryManager extends JFrame
 	private JButton show;
 	private BotModel model;
 	private final Sigar sigar;
+	private File temp;
 
 	public BinaryManager()
 	{
@@ -118,33 +119,78 @@ public class BinaryManager extends JFrame
 		});
 
 		sigar = new Sigar();
-		if (SystemTray.isSupported())
+		try
+		{
+			temp = File.createTempFile("binary", "tmp");
+			temp = new File(temp.getParentFile(), "YAEB.app");
+			if (temp.exists())
+			{
+				if (temp.delete())
+					temp.mkdir();
+				else
+				{
+					System.err.println("could not create temporary directory");
+					System.exit(1);
+				}
+			}
+			else
+				temp.mkdir();
+		}
+		catch (IOException e)
+		{
+			throw new RuntimeException(e);
+		}
+	}
+
+	public static void copyFolder(final File src, final File dest)
+			throws IOException
+	{
+
+		if (src.isDirectory())
 		{
 
-			final SystemTray tray = SystemTray.getSystemTray();
-			final Image image = Toolkit.getDefaultToolkit().getImage(BinaryManager.class.getResource("/evony.gif"));
+			if (!dest.exists())
+				dest.mkdir();
 
-			final TrayIcon trayIcon = new TrayIcon(image, "Telescope");
-			trayIcon.setImageAutoSize(true);
-			trayIcon.addMouseListener(new MouseAdapter()
+			final String[] files = src.list();
+			for (final String file : files)
 			{
-				@Override
-				public void mousePressed(final MouseEvent mouseEvent)
-				{
-					BinaryManager.this.setVisible(!BinaryManager.this.isVisible());
-				}
-
-			});
-
-			try
-			{
-				tray.add(trayIcon);
-			}
-			catch (AWTException e)
-			{
-				throw new RuntimeException(e);
+				final File srcFile = new File(src, file);
+				final File destFile = new File(dest, file);
+				copyFolder(srcFile, destFile);
 			}
 		}
+		else
+		{
+			final FileChannel srcChannel = new FileInputStream(src).getChannel();
+			try
+			{
+				final FileChannel dstChannel = new FileInputStream(dest).getChannel();
+				try
+				{
+					final ByteBuffer buffer = ByteBuffer.allocate(1024);
+					while (true)
+					{
+						buffer.clear();
+						if (srcChannel.read(buffer) == -1)
+							break;
+						buffer.flip();
+						dstChannel.write(buffer);
+					}
+					srcChannel.close();
+					dstChannel.close();
+				}
+				finally
+				{
+					dstChannel.close();
+				}
+			}
+			finally
+			{
+				srcChannel.close();
+			}
+		}
+
 	}
 
 	private void enableButtons()
@@ -152,7 +198,7 @@ public class BinaryManager extends JFrame
 		final int[] rows = bots.getSelectedRows();
 		boolean hasRunning = false;
 		boolean hasNotRunning = false;
-		for (int row : rows)
+		for (final int row : rows)
 		{
 			final Bot bot = model.bots.get(row);
 			hasRunning |= bot.running;
@@ -165,11 +211,11 @@ public class BinaryManager extends JFrame
 		delete.setEnabled(rows.length > 0);
 	}
 
-	public static void main(String[] args)
+	public static void main(final String[] args)
 	{
-		BinaryManager dialog = new BinaryManager();
+		final BinaryManager dialog = new BinaryManager();
 		dialog.pack();
-		dialog.setSize(600, 350);
+		dialog.setSize(640, 350);
 		dialog.init();
 		dialog.setLocationRelativeTo(null);
 		dialog.setVisible(true);
@@ -197,7 +243,7 @@ public class BinaryManager extends JFrame
 			{
 				final long[] pids = ProcessQueryFactory.getInstance().getQuery("Exe.Name.ew=mdm_flash_player").find(sigar);
 				final Set<Long> running = new HashSet<Long>(pids.length);
-				for (long pid : pids)
+				for (final long pid : pids)
 				{
 					running.add(pid);
 					final String[] args = sigar.getProcArgs(pid);
@@ -208,7 +254,7 @@ public class BinaryManager extends JFrame
 					String profile = "";
 					String server = null;
 
-					for (String arg : args)
+					for (final String arg : args)
 					{
 						if (foundProfile)
 						{
@@ -228,7 +274,7 @@ public class BinaryManager extends JFrame
 					}
 					if (profile != null && server != null)
 					{
-						for (Bot bot : model.bots)
+						for (final Bot bot : model.bots)
 						{
 							if (server.equals(bot.server) && profile.equals(bot.profile))
 							{
@@ -258,7 +304,7 @@ public class BinaryManager extends JFrame
 				if (auto.isSelected())
 				{
 					int delay = 0;
-					for (Bot bot : closed)
+					for (final Bot bot : closed)
 					{
 						start(delay, bot);
 						delay += 1;
@@ -274,7 +320,7 @@ public class BinaryManager extends JFrame
 		final Preferences preferences = Preferences.userNodeForPackage(BinaryManager.class);
 		yaeb.setText(preferences.get("yaeb", "none"));
 		auto.setSelected(preferences.getBoolean("auto", true));
-		int numBots = preferences.getInt("numBots", 0);
+		final int numBots = preferences.getInt("numBots", 0);
 		for (int i = 0; i < numBots; i++)
 		{
 			final String profile = preferences.get("bot" + i + ".profile", "");
@@ -290,7 +336,7 @@ public class BinaryManager extends JFrame
 		preferences.putBoolean("auto", auto.isSelected());
 		preferences.putInt("numBots", model.bots.size());
 		int i = 0;
-		for (Bot bot : model.bots)
+		for (final Bot bot : model.bots)
 		{
 			preferences.put("bot" + i + ".profile", bot.profile);
 			preferences.put("bot" + i + ".server", bot.server);
@@ -314,20 +360,22 @@ public class BinaryManager extends JFrame
 
 	private void onChange()
 	{
-		JFileChooser chooser = new JFileChooser();
-		FileNameExtensionFilter filter = new FileNameExtensionFilter("Applications", "exe", "app");
+		final JFileChooser chooser = new JFileChooser();
+		final FileNameExtensionFilter filter = new FileNameExtensionFilter("Applications", "exe", "app");
 		chooser.setFileFilter(filter);
 		if (chooser.showOpenDialog(this) == APPROVE_OPTION)
 		{
 			yaeb.setText(chooser.getSelectedFile().getAbsolutePath());
 			saveConfig();
+			if(temp.exists())
+				temp.delete();
 		}
 	}
 
 	private void onStart()
 	{
 		int delay = 0;
-		for (int row : bots.getSelectedRows())
+		for (final int row : bots.getSelectedRows())
 		{
 			final Bot bot = model.bots.get(row);
 			if (!bot.running)
@@ -341,26 +389,37 @@ public class BinaryManager extends JFrame
 	private void start(int delay, final Bot bot)
 	{
 		final File yaeb = new File(this.yaeb.getText());
-		if(!yaeb.exists())
+		if (!yaeb.exists())
 		{
-			showMessageDialog(this, String.format("%s is not present",yaeb.getAbsolutePath()));
+			showMessageDialog(this, String.format("%s is not present", yaeb.getAbsolutePath()));
 			return;
 		}
 		final ProcessBuilder builder = new ProcessBuilder();
 		builder.directory(yaeb.getParentFile());
-		final File profileApp = new File(yaeb.getParentFile(), String.format("%s %s.app",bot.profile,bot.server));
-		if (yaeb.renameTo(profileApp))
+		final File profileApp = new File(temp.getParentFile(), String.format("%s %s.app", bot.profile, bot.server));
+		if(!temp.exists())
+		{
+			try
+			{
+				copyFolder(yaeb,temp);
+			}
+			catch (IOException e)
+			{
+				throw new RuntimeException(e);
+			}
+		}
+		if (temp.renameTo(profileApp))
 		{
 			builder.command("open", "-n", profileApp.getName(), "--args", "-autostart", "-autorun", "-profile", bot.profile,
-					"-server", bot.server,
-					"-delay", Integer.toString(delay));
+			                "-server", bot.server,
+			                "-delay", Integer.toString(delay));
 		}
 		try
 		{
 			final Process proc = builder.start();
 			proc.waitFor();
-			Thread.sleep(20000);
-			if (!profileApp.renameTo(yaeb))
+			Thread.sleep(10000);
+			if (!profileApp.renameTo(temp))
 				System.err.println("couldn't name back to original");
 			delay += 1;
 		}
@@ -376,7 +435,7 @@ public class BinaryManager extends JFrame
 
 	private void onStop()
 	{
-		for (int row : bots.getSelectedRows())
+		for (final int row : bots.getSelectedRows())
 			kill(model.bots.get(row));
 	}
 
@@ -400,7 +459,7 @@ public class BinaryManager extends JFrame
 	private void onRestart()
 	{
 		final Set<Bot> toRestart = new HashSet<Bot>(0);
-		for (int row : bots.getSelectedRows())
+		for (final int row : bots.getSelectedRows())
 		{
 			final Bot bot = model.bots.get(row);
 			if (bot.running)
@@ -434,10 +493,10 @@ public class BinaryManager extends JFrame
 
 	private static final String focusScript =
 			"tell application \"System Events\"\n" +
-			"    set theprocs to every process whose unix id is %d\n" +
-			"    repeat with proc in theprocs\n" +
-			"        set the frontmost of proc to true\n" +
-			"    end repeat\n" +
-			"end tell";
+					"    set theprocs to every process whose unix id is %d\n" +
+					"    repeat with proc in theprocs\n" +
+					"        set the frontmost of proc to true\n" +
+					"    end repeat\n" +
+					"end tell";
 
 }

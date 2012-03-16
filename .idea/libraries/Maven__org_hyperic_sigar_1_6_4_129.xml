@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: org.hyperic:sigar:1.6.4.129">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/hyperic/sigar/1.6.4.129/sigar-1.6.4.129.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/hyperic/sigar/1.6.4.129/sigar-1.6.4.129-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/hyperic/sigar/1.6.4.129/sigar-1.6.4.129-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

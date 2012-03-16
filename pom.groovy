@@ -1,11 +1,10 @@
 project {
     modelVersion '4.0.0'
-    parent ('org.truegods:parent:1.0-SNAPSHOT', relativePath:'../')
     groupId 'org.truegods'
     artifactId 'binary'
     version '1.0-SNAPSHOT'
     name 'Binary Manager'
-    description 'TrueGods Binary Manager'
+    description 'Binary Manager'
     dependencies {
 	    dependency('joda-time:joda-time:1.6.2')
       dependency('org.hyperic:sigar:1.6.4.129')

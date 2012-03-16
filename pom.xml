@@ -2,22 +2,26 @@
 <project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
   <modelVersion>4.0.0</modelVersion>
-  <parent>
-    <artifactId>parent</artifactId>
-    <groupId>org.truegods</groupId>
-    <version>1.0-SNAPSHOT</version>
-    <relativePath>../</relativePath>
-  </parent>
   <groupId>org.truegods</groupId>
   <artifactId>binary</artifactId>
   <version>1.0-SNAPSHOT</version>
   <name>Binary Manager</name>
-  <description>TrueGods Binary Manager</description>
+  <description>Binary Manager</description>
   <dependencies>
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>1.6.2</version>
+    </dependency>
     <dependency>
       <groupId>org.hyperic</groupId>
       <artifactId>sigar</artifactId>
       <version>1.6.4.129</version>
+    </dependency>
+    <dependency>
+      <groupId>com.intellij</groupId>
+      <artifactId>forms_rt</artifactId>
+      <version>7.0.3</version>
     </dependency>
     <dependency>
       <groupId>org.hyperic</groupId>
@@ -26,16 +30,6 @@
       <type>zip</type>
       <scope>runtime</scope>
     </dependency>
-	  <dependency>
-		  <groupId>joda-time</groupId>
-		  <artifactId>joda-time</artifactId>
-		  <version>1.6.2</version>
-	  </dependency>
-	  <dependency>
-		  <groupId>com.intellij</groupId>
-		  <artifactId>forms_rt</artifactId>
-		  <version>7.0.3</version>
-	  </dependency>
   </dependencies>
   <build>
     <plugins>
@@ -51,9 +45,9 @@
           </execution>
         </executions>
         <configuration>
-          <debug>true</debug>
-	        <failOnError>true</failOnError>
-	        <fork>true</fork>
+          <debug />
+          <failOnError />
+          <fork />
         </configuration>
       </plugin>
       <plugin>
