@@ -3,12 +3,12 @@
   <grid id="cbd77" binding="contentPane" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="10" left="10" bottom="10" right="10"/>
     <constraints>
-      <xy x="48" y="54" width="659" height="325"/>
+      <xy x="48" y="54" width="664" height="325"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="e3588" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="e3588" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -19,7 +19,7 @@
           <grid id="75d70" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
-              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -52,7 +52,7 @@
           </grid>
           <scrollpane id="3f494">
             <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
@@ -63,87 +63,65 @@
               </component>
             </children>
           </scrollpane>
-          <grid id="f1d85" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="0" right="0"/>
+          <toolbar id="e3831">
             <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false">
+                <preferred-size width="-1" height="20"/>
+              </grid>
             </constraints>
             <properties/>
             <border type="none"/>
             <children>
               <component id="81e5" class="javax.swing.JButton" binding="start">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
+                <constraints/>
                 <properties>
                   <enabled value="false"/>
-                  <text value="Start"/>
+                  <icon value="control_play.png"/>
+                  <text value=""/>
+                  <toolTipText value="Start"/>
                 </properties>
               </component>
               <component id="c096f" class="javax.swing.JButton" binding="stop">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
+                <constraints/>
                 <properties>
                   <enabled value="false"/>
-                  <text value="Stop"/>
+                  <icon value="control_stop.png"/>
+                  <text value=""/>
+                  <toolTipText value="Stop"/>
                 </properties>
               </component>
               <component id="5d0ab" class="javax.swing.JButton" binding="restart">
-                <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
+                <constraints/>
                 <properties>
                   <enabled value="false"/>
-                  <text value="Restart"/>
+                  <icon value="control_end.png"/>
+                  <text value=""/>
+                  <toolTipText value="Restart"/>
                 </properties>
               </component>
               <component id="383fe" class="javax.swing.JButton" binding="delete">
-                <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
+                <constraints/>
                 <properties>
                   <enabled value="false"/>
-                  <text value="Delete"/>
+                  <icon value="delete.png"/>
+                  <text value=""/>
+                  <toolTipText value="Delete"/>
                 </properties>
               </component>
-              <grid id="7744" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-                <margin top="0" left="0" bottom="0" right="0"/>
-                <constraints>
-                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties/>
-                <border type="none"/>
-                <children>
-                  <component id="f05e" class="javax.swing.JCheckBox" binding="auto">
-                    <constraints>
-                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <text value="Auto Restart"/>
-                    </properties>
-                  </component>
-                  <vspacer id="45b47">
-                    <constraints>
-                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-                    </constraints>
-                  </vspacer>
-                </children>
-              </grid>
-              <component id="b3851" class="javax.swing.JButton" binding="show">
-                <constraints>
-                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-                </constraints>
+              <hspacer id="20136">
+                <constraints/>
+              </hspacer>
+              <component id="f05e" class="javax.swing.JCheckBox" binding="auto">
+                <constraints/>
                 <properties>
-                  <enabled value="false"/>
-                  <text value="Show"/>
+                  <text value="Auto Restart"/>
                 </properties>
               </component>
             </children>
-          </grid>
+          </toolbar>
         </children>
       </grid>
-      <grid id="f0c5d" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="f0c5d" layout-manager="GridLayoutManager" row-count="1" column-count="9" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -153,7 +131,7 @@
         <children>
           <component id="d1962" class="javax.swing.JTextField" binding="profile">
             <constraints>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+              <grid row="0" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
@@ -161,7 +139,7 @@
           </component>
           <component id="65182" class="javax.swing.JTextField" binding="server">
             <constraints>
-              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+              <grid row="0" column="7" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="50" height="-1"/>
               </grid>
             </constraints>
@@ -169,26 +147,62 @@
           </component>
           <component id="48d1f" class="javax.swing.JButton" binding="add">
             <constraints>
-              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="8" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Add Profile"/>
+              <icon value="add.png"/>
+              <text value=""/>
+              <toolTipText value="Add Account"/>
             </properties>
           </component>
           <component id="38da8" class="javax.swing.JLabel">
             <constraints>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Profile"/>
+              <text value="Account:"/>
             </properties>
           </component>
           <component id="a64ff" class="javax.swing.JLabel">
             <constraints>
-              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+              <grid row="0" column="6" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Server"/>
+              <text value="Server:"/>
+            </properties>
+          </component>
+          <component id="219f3" class="javax.swing.JComboBox" binding="group">
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+          </component>
+          <component id="1b95b" class="javax.swing.JLabel">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <text value="Group:"/>
+            </properties>
+          </component>
+          <component id="441c4" class="javax.swing.JButton" binding="addGroup">
+            <constraints>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <icon value="folder_add.png"/>
+              <text value=""/>
+              <toolTipText value="Add Group"/>
+            </properties>
+          </component>
+          <component id="96411" class="javax.swing.JButton" binding="deleteGroup">
+            <constraints>
+              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <icon value="folder_delete.png"/>
+              <text value=""/>
+              <toolTipText value="delete Group"/>
             </properties>
           </component>
         </children>

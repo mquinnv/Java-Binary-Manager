@@ -15,15 +15,17 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.prefs.Preferences;
 
+import static java.lang.System.*;
+import static java.util.concurrent.TimeUnit.*;
 import static javax.swing.JFileChooser.*;
 import static javax.swing.JOptionPane.*;
 
@@ -41,25 +43,61 @@ public class BinaryManager extends JFrame
 	private JLabel yaeb;
 	private JButton change;
 	private JCheckBox auto;
-	private JButton show;
-	private BotModel model;
+	private JComboBox group;
+	private JButton addGroup;
+	private JButton deleteGroup;
+	private List<BotModel> models;
 	private final Sigar sigar;
 	private File temp;
+	private final GroupModel groups;
+	private int selectedGroup;
+
+	private final Lock lock = new ReentrantLock();
+
+	private void selectGroup(final int group)
+	{
+		lock.lock();
+		try
+		{
+			selectedGroup = group;
+			bots.setModel(models.get(group));
+		}
+		finally
+		{
+			lock.unlock();
+		}
+	}
 
 	public BinaryManager()
 	{
 		setContentPane(contentPane);
-
 		setDefaultCloseOperation(EXIT_ON_CLOSE);
-		model = new BotModel();
-		bots.setModel(model);
-		model.addTableModelListener(new TableModelListener()
+		models = new ArrayList<BotModel>(1);
+		groups = new GroupModel();
+		group.addActionListener(new ActionListener()
 		{
-			public void tableChanged(final TableModelEvent event)
+			public void actionPerformed(final ActionEvent event)
 			{
-				enableButtons();
+				selectedGroup = group.getSelectedIndex();
+				selectGroup(group.getSelectedIndex());
 			}
 		});
+
+		addGroup.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(final ActionEvent event)
+			{
+				onAddGroup();
+			}
+		});
+		deleteGroup.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(final ActionEvent event)
+			{
+				onDeleteGroup();
+			}
+		});
+
 		bots.getSelectionModel().addListSelectionListener(new ListSelectionListener()
 		{
 			public void valueChanged(final ListSelectionEvent event)
@@ -110,31 +148,12 @@ public class BinaryManager extends JFrame
 				onRestart();
 			}
 		});
-		show.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(final ActionEvent event)
-			{
-				onShow();
-			}
-		});
 
 		sigar = new Sigar();
 		try
 		{
 			temp = File.createTempFile("binary", "tmp");
-			temp = new File(temp.getParentFile(), "YAEB.app");
-			if (temp.exists())
-			{
-				if (temp.delete())
-					temp.mkdir();
-				else
-				{
-					System.err.println("could not create temporary directory");
-					System.exit(1);
-				}
-			}
-			else
-				temp.mkdir();
+			temp = new File(temp.getParentFile(), String.format("%d.yaeb", System.currentTimeMillis()));
 		}
 		catch (IOException e)
 		{
@@ -143,53 +162,11 @@ public class BinaryManager extends JFrame
 	}
 
 	public static void copyFolder(final File src, final File dest)
-			throws IOException
+			throws IOException, InterruptedException
 	{
-
-		if (src.isDirectory())
-		{
-
-			if (!dest.exists())
-				dest.mkdir();
-
-			final String[] files = src.list();
-			for (final String file : files)
-			{
-				final File srcFile = new File(src, file);
-				final File destFile = new File(dest, file);
-				copyFolder(srcFile, destFile);
-			}
-		}
-		else
-		{
-			final FileChannel srcChannel = new FileInputStream(src).getChannel();
-			try
-			{
-				final FileChannel dstChannel = new FileInputStream(dest).getChannel();
-				try
-				{
-					final ByteBuffer buffer = ByteBuffer.allocate(1024);
-					while (true)
-					{
-						buffer.clear();
-						if (srcChannel.read(buffer) == -1)
-							break;
-						buffer.flip();
-						dstChannel.write(buffer);
-					}
-					srcChannel.close();
-					dstChannel.close();
-				}
-				finally
-				{
-					dstChannel.close();
-				}
-			}
-			finally
-			{
-				srcChannel.close();
-			}
-		}
+		final ProcessBuilder pb = new ProcessBuilder("cp", "-r", src.getAbsolutePath(), dest.getAbsolutePath());
+		final Process p = pb.start();
+		p.waitFor();
 
 	}
 
@@ -198,6 +175,7 @@ public class BinaryManager extends JFrame
 		final int[] rows = bots.getSelectedRows();
 		boolean hasRunning = false;
 		boolean hasNotRunning = false;
+		final BotModel model = models.get(selectedGroup);
 		for (final int row : rows)
 		{
 			final Bot bot = model.bots.get(row);
@@ -207,7 +185,6 @@ public class BinaryManager extends JFrame
 		start.setEnabled(hasNotRunning);
 		restart.setEnabled(hasRunning);
 		stop.setEnabled(hasRunning);
-		show.setEnabled(rows.length == 1 && model.bots.get(rows[0]).running);
 		delete.setEnabled(rows.length > 0);
 	}
 
@@ -231,8 +208,8 @@ public class BinaryManager extends JFrame
 				saveConfig();
 			}
 		});
-		System.out.println("querying sigar");
-		Cron.interval(5, TimeUnit.SECONDS, new CronJob()
+		out.println("querying sigar");
+		Cron.interval(5, SECONDS, new CronJob()
 		{
 			public String getName()
 			{
@@ -241,76 +218,85 @@ public class BinaryManager extends JFrame
 
 			public void exec(final CronStatus status) throws Throwable
 			{
-				final long[] pids = ProcessQueryFactory.getInstance().getQuery("Exe.Name.ew=mdm_flash_player").find(sigar);
-				final Set<Long> running = new HashSet<Long>(pids.length);
-				for (final long pid : pids)
+				lock.lock();
+				try
 				{
-					running.add(pid);
-					final String[] args = sigar.getProcArgs(pid);
-					final double cpu = sigar.getProcCpu(pid).getPercent();
-					final long mem = sigar.getProcMem(pid).getResident();
-					boolean foundProfile = false;
-					boolean foundServer = false;
-					String profile = "";
-					String server = null;
-
-					for (final String arg : args)
+					final long[] pids = ProcessQueryFactory.getInstance().getQuery("Exe.Name.ew=mdm_flash_player").find(sigar);
+					final Set<Long> running = new HashSet<Long>(pids.length);
+					final BotModel model = models.get(selectedGroup);
+					for (final long pid : pids)
 					{
-						if (foundProfile)
-						{
-							profile = arg;
-							foundProfile = false;
-						}
-						else if (foundServer)
-						{
-							server = arg;
-							foundServer = false;
-						}
-						else if ("-profile".equals(arg))
-							foundProfile = true;
-						else if ("-server".equals(arg))
-							foundServer = true;
+						running.add(pid);
+						final String[] args = sigar.getProcArgs(pid);
+						final double cpu = sigar.getProcCpu(pid).getPercent();
+						final long mem = sigar.getProcMem(pid).getResident();
+						boolean foundProfile = false;
+						boolean foundServer = false;
+						String profile = "";
+						String server = null;
 
-					}
-					if (profile != null && server != null)
-					{
-						for (final Bot bot : model.bots)
+						for (final String arg : args)
 						{
-							if (server.equals(bot.server) && profile.equals(bot.profile))
+							if (foundProfile)
 							{
-								bot.cpu = cpu;
-								bot.ram = mem;
-								bot.running = true;
-								bot.pid = pid;
-								model.update(bot);
-								break;
+								profile = arg;
+								foundProfile = false;
+							}
+							else if (foundServer)
+							{
+								server = arg;
+								foundServer = false;
+							}
+							else if ("-profile".equals(arg))
+								foundProfile = true;
+							else if ("-server".equals(arg))
+								foundServer = true;
+
+						}
+						if (profile != null && server != null)
+						{
+							for (final Bot bot : model.bots)
+							{
+								if (server.equals(bot.server) && profile.equals(bot.profile))
+								{
+									bot.cpu = cpu;
+									bot.ram = mem;
+									bot.running = true;
+									bot.pid = pid;
+									model.update(bot);
+									break;
+								}
 							}
 						}
 					}
-				}
-				final Set<Bot> closed = new HashSet<Bot>(0);
-				for (final Bot bot : model.bots)
-				{
-					if (bot.running && !running.contains(bot.pid))
+					final Set<Bot> closed = new HashSet<Bot>(0);
+					for (final Bot bot : model.bots)
 					{
-						bot.running = false;
-						bot.pid = 0;
-						bot.cpu = null;
-						bot.ram = null;
-						model.update(bot);
-						closed.add(bot);
+						if (bot.running && !running.contains(bot.pid))
+						{
+							bot.running = false;
+							bot.pid = 0;
+							bot.cpu = null;
+							bot.ram = null;
+							model.update(bot);
+							closed.add(bot);
+						}
 					}
-				}
-				if (auto.isSelected())
-				{
-					int delay = 0;
-					for (final Bot bot : closed)
+					if (auto.isSelected())
 					{
-						start(delay, bot);
-						delay += 1;
+						int delay = 0;
+						for (final Bot bot : closed)
+						{
+							start(delay, bot);
+							delay += 1;
+						}
 					}
-				}
 
+				}
+				finally
+				{
+					lock.unlock();
+				}
 			}
 		});
 	}
@@ -320,13 +306,44 @@ public class BinaryManager extends JFrame
 		final Preferences preferences = Preferences.userNodeForPackage(BinaryManager.class);
 		yaeb.setText(preferences.get("yaeb", "none"));
 		auto.setSelected(preferences.getBoolean("auto", true));
-		final int numBots = preferences.getInt("numBots", 0);
+		final int numGroups = preferences.getInt("numGroups", 1);
+
+		for (int i = 0; i < numGroups; i++)
+		{
+			groups.add(i == 0 ? "Default" : preferences.get("group" + i, ""));
+			loadGroup(i);
+		}
+
+		selectGroup(0);
+		group.setModel(groups);
+	}
+
+	private String prefix(final int group, final String key)
+	{
+		return group == 0 ? key : String.format("%s%s", groups.get(group), key);
+	}
+
+	private void loadGroup(final int group)
+	{
+		final Preferences preferences = Preferences.userNodeForPackage(BinaryManager.class);
+
+		final int numBots = preferences.getInt(prefix(group, "numBots"), 0);
+		final BotModel model = new BotModel();
 		for (int i = 0; i < numBots; i++)
 		{
-			final String profile = preferences.get("bot" + i + ".profile", "");
-			final String server = preferences.get("bot" + i + ".server", "");
+			final String profile = preferences.get(prefix(group, "bot" + i + ".profile"), "");
+			final String server = preferences.get(prefix(group, "bot" + i + ".server"), "");
 			model.add(new Bot(profile, server));
 		}
+		model.addTableModelListener(new TableModelListener()
+		{
+			public void tableChanged(final TableModelEvent event)
+			{
+				enableButtons();
+			}
+		});
+		models.add(model);
+
 	}
 
 	private void saveConfig()
@@ -334,24 +351,40 @@ public class BinaryManager extends JFrame
 		final Preferences preferences = Preferences.userNodeForPackage(BinaryManager.class);
 		preferences.put("yaeb", yaeb.getText());
 		preferences.putBoolean("auto", auto.isSelected());
-		preferences.putInt("numBots", model.bots.size());
+		final int size = groups.getSize();
+		preferences.putInt("numGroups", size);
+		for (int i = 0; i < size; i++)
+		{
+			preferences.put("group" + i, groups.get(i));
+			saveGroup(i);
+		}
+	}
+
+	private void saveGroup(final int group)
+	{
+		final Preferences preferences = Preferences.userNodeForPackage(BinaryManager.class);
+		final BotModel model = models.get(group);
+		preferences.putInt(prefix(group, "numBots"), model.bots.size());
 		int i = 0;
 		for (final Bot bot : model.bots)
 		{
-			preferences.put("bot" + i + ".profile", bot.profile);
-			preferences.put("bot" + i + ".server", bot.server);
+			preferences.put(prefix(group, "bot" + i + ".profile"), bot.profile);
+			preferences.put(prefix(group, "bot" + i + ".server"), bot.server);
 			i++;
 		}
+
 	}
 
 	private void onAdd()
 	{
+		final BotModel model = models.get(selectedGroup);
 		model.add(new Bot(profile.getText(), server.getText()));
 		saveConfig();
 	}
 
 	private void onDelete()
 	{
+		final BotModel model = models.get(selectedGroup);
 		final int[] rows = bots.getSelectedRows();
 		for (int i = rows.length - 1; i >= 0; i--)
 			model.remove(rows[i]);
@@ -367,13 +400,14 @@ public class BinaryManager extends JFrame
 		{
 			yaeb.setText(chooser.getSelectedFile().getAbsolutePath());
 			saveConfig();
-			if(temp.exists())
+			if (temp.exists())
 				temp.delete();
 		}
 	}
 
 	private void onStart()
 	{
+		final BotModel model = models.get(selectedGroup);
 		int delay = 0;
 		for (final int row : bots.getSelectedRows())
 		{
@@ -395,15 +429,19 @@ public class BinaryManager extends JFrame
 			return;
 		}
 		final ProcessBuilder builder = new ProcessBuilder();
-		builder.directory(yaeb.getParentFile());
+		builder.directory(temp.getParentFile());
 		final File profileApp = new File(temp.getParentFile(), String.format("%s %s.app", bot.profile, bot.server));
-		if(!temp.exists())
+		if (!temp.exists())
 		{
 			try
 			{
-				copyFolder(yaeb,temp);
+				copyFolder(yaeb, temp);
 			}
 			catch (IOException e)
+			{
+				throw new RuntimeException(e);
+			}
+			catch (InterruptedException e)
 			{
 				throw new RuntimeException(e);
 			}
@@ -435,12 +473,14 @@ public class BinaryManager extends JFrame
 
 	private void onStop()
 	{
+		final BotModel model = models.get(selectedGroup);
 		for (final int row : bots.getSelectedRows())
 			kill(model.bots.get(row));
 	}
 
 	private void kill(final Bot bot)
 	{
+		final BotModel model = models.get(selectedGroup);
 		try
 		{
 			sigar.kill(bot.pid, 1);
@@ -458,6 +498,7 @@ public class BinaryManager extends JFrame
 
 	private void onRestart()
 	{
+		final BotModel model = models.get(selectedGroup);
 		final Set<Bot> toRestart = new HashSet<Bot>(0);
 		for (final int row : bots.getSelectedRows())
 		{
@@ -476,27 +517,43 @@ public class BinaryManager extends JFrame
 		}
 	}
 
-	private void onShow()
+	private void onAddGroup()
 	{
-		final String script = String.format(focusScript, model.bots.get(bots.getSelectedRow()).pid);
-		final ProcessBuilder builder = new ProcessBuilder();
-		builder.command("osascript", "-e", script);
-		try
+		final String newGroup = showInputDialog(this, "Name", "Add Group", QUESTION_MESSAGE);
+		if (newGroup != null && !newGroup.equals(""))
 		{
-			builder.start();
-		}
-		catch (IOException e)
-		{
-			showMessageDialog(this, e.getMessage());
+			if (groups.contains(newGroup))
+			{
+				showMessageDialog(this, String.format("Group %s already exists", newGroup));
+			}
+			else
+			{
+				groups.add(newGroup);
+				models.add(new BotModel());
+				saveConfig();
+				this.group.setSelectedIndex(groups.getSize()-1);
+			}
 		}
 	}
 
-	private static final String focusScript =
-			"tell application \"System Events\"\n" +
-					"    set theprocs to every process whose unix id is %d\n" +
-					"    repeat with proc in theprocs\n" +
-					"        set the frontmost of proc to true\n" +
-					"    end repeat\n" +
-					"end tell";
+	private void onDeleteGroup()
+	{
+		if (selectedGroup == 0)
+			showMessageDialog(this, String.format("You can not remove the default group"));
+		else
+		{
+			switch (showConfirmDialog(this, String.format("Delete Group %s?", groups.get(selectedGroup)), "Delete Group",
+			                          YES_NO_OPTION))
+			{
+				case YES_OPTION:
+					models.remove(selectedGroup);
+					groups.remove(selectedGroup);
+					saveConfig();
+					this.group.setSelectedIndex(selectedGroup);
+					break;
+			}
+		}
+
+	}
 
 }
