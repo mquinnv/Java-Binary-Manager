@@ -1,7 +1,0 @@
-Manifest-Version: 1.0
-Built-By: michael
-Build-Jdk: 1.6.0_29
-Created-By: Apache Maven
-Main-Class: org.truegods.binary.BinaryManager
-Archiver-Version: Plexus Archiver
-
