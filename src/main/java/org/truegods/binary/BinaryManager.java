@@ -71,7 +71,7 @@ public class BinaryManager extends JFrame
 	public BinaryManager()
 	{
 		setContentPane(contentPane);
-		setDefaultCloseOperation(EXIT_ON_CLOSE);
+		setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		models = new ArrayList<BotModel>(1);
 		groups = new GroupModel();
 		group.addActionListener(new ActionListener()
@@ -270,6 +270,7 @@ public class BinaryManager extends JFrame
 						}
 					}
 					final Set<Bot> closed = new HashSet<Bot>(0);
+					final Set<Bot> hogs = new HashSet<Bot>(0);
 					for (final Bot bot : model.bots)
 					{
 						if (bot.running && !running.contains(bot.pid))
@@ -281,6 +282,8 @@ public class BinaryManager extends JFrame
 							model.update(bot);
 							closed.add(bot);
 						}
+						if(bot.running && bot.ram > 314572800L)
+							hogs.add(bot);
 					}
 					if (auto.isSelected())
 					{
@@ -289,6 +292,13 @@ public class BinaryManager extends JFrame
 						{
 							start(delay, bot);
 							delay += 1;
+						}
+						for (final Bot hog : hogs)
+							kill(hog);
+						for (final Bot hog : hogs)
+						{
+							start(delay,hog);
+							delay+=1;
 						}
 					}
 
@@ -451,6 +461,11 @@ public class BinaryManager extends JFrame
 			builder.command("open", "-n", profileApp.getName(), "--args", "-autostart", "-autorun", "-profile", bot.profile,
 			                "-server", bot.server,
 			                "-delay", Integer.toString(delay));
+		}
+		else
+		{
+			System.err.printf("could not rename %s to %s%n",temp.getAbsolutePath(),profileApp.getAbsolutePath());
+			return;
 		}
 		try
 		{
